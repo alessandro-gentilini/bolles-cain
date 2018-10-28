@@ -126,14 +126,9 @@ int main(int, char*[]) {
 
    graph_t *g = graph_new(n_vertices);
 
-   std::cout << n_vertices << " " << 2 * n_edges <<  "\n";
    for (auto c : assignments) {
-      std::cout << two_way.look_up_21(c.first) << "," << two_way.look_up_21(c.second) << "\n";
-      std::cout << two_way.look_up_21(c.second) << "," << two_way.look_up_21(c.first) << "\n";
-
       GRAPH_ADD_EDGE(g, two_way.look_up_21(c.first), two_way.look_up_21(c.second));
    }
-   std::cout << "\n";
 
    static clique_options opt_struct = {
       reorder_by_default, NULL, NULL, NULL, NULL, NULL, NULL, 0
@@ -146,7 +141,7 @@ int main(int, char*[]) {
    for (size_t v = 0; v < n_vertices; v++) {
       if (SET_CONTAINS(s, v)) {
          auto vv = two_way.look_up_12(v);
-         std::cout << vv.first << " " << vv.second << "\n";
+         std::cout << "\"(" << vv.first << "," << vv.second << ")\"\n";
       }
    }
 
