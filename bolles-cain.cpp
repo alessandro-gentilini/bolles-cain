@@ -114,16 +114,6 @@ int main(int, char*[]) {
       }
    }
 
-   int n_edges = 0;
-   std::cout << "graph G{\n";
-   for (auto c : assignments) {
-      std::cout << "\"(" << c.first.first << "," << c.first.second << ")\" -- \"(" << c.second.first << "," << c.second.second << ")\";\n";
-      n_edges++;
-   }
-   std::cout << "}\n";
-
-   std::cout << "\n";
-
    graph_t *g = graph_new(n_vertices);
 
    for (auto c : assignments) {
@@ -138,12 +128,20 @@ int main(int, char*[]) {
    set_t s;
 
    s = clique_find_single(g, 0, 0, FALSE, opt);
+
+   std::cout << "\ngraph G{\n";
+
    for (size_t v = 0; v < n_vertices; v++) {
       if (SET_CONTAINS(s, v)) {
          auto vv = two_way.look_up_12(v);
-         std::cout << "\"(" << vv.first << "," << vv.second << ")\"\n";
+         std::cout << "\"(" << vv.first << "," << vv.second << ")\" [color=red];\n";
       }
    }
+
+   for (auto c : assignments) {
+      std::cout << "\"(" << c.first.first << "," << c.first.second << ")\" -- \"(" << c.second.first << "," << c.second.second << ")\";\n";
+   }
+   std::cout << "}\n";   
 
    return 0;
 }
