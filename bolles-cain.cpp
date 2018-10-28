@@ -20,6 +20,10 @@ double deg2rad(double d) {
    return d * M_PI / 180;
 }
 
+double rad2deg(double r) {
+   return r * 180 / M_PI;
+}
+
 double distance(const std::vector<cv::Point2d>& P1,
                 const std::vector<cv::Point2d>& P2,
                 const std::pair<size_t, size_t>& src,
@@ -77,12 +81,16 @@ int main(int, char*[]) {
    P1.push_back(cv::Point2d(1, 0));
    P1.push_back(cv::Point2d(cos(deg2rad(175)), sin(deg2rad(175))));
    P1.push_back(cv::Point2d(cos(deg2rad(185)), sin(deg2rad(185))));
+   P1.push_back(cv::Point2d(cos(deg2rad(15)), sin(deg2rad(15))));
+   P1.push_back(cv::Point2d(cos(deg2rad(35)), sin(deg2rad(35))));
+   P1.push_back(cv::Point2d(cos(deg2rad(45)), sin(deg2rad(45))));
 
    auto theta = deg2rad(45);
 
 
    std::vector<cv::Point2d> P2;
    for (size_t i = 0; i < P1.size(); i++) {
+      if(i==5 || i==3) continue;
       P2.push_back(cv::Point2d(cos(theta)*P1[i].x - sin(theta)*P1[i].y, sin(theta)*P1[i].x + cos(theta)*P1[i].y));
    }
 
@@ -151,11 +159,12 @@ int main(int, char*[]) {
    cv::Mat RT = cv::estimateRigidTransform(src, dst, false);
    cv::Mat original = (cv::Mat_<double>(2, 3) << cos(theta), -sin(theta), 0, sin(theta), cos(theta), 0);
 
-   //std::cerr << RT << "\n";
-   //std::cerr << original << "\n";
-   double minVal=-1;
-   cv::minMaxIdx(cv::abs(RT - original),&minVal,0);
-   std::cerr << minVal << "\n";
+   std::cerr << "Applied transformation:\n" << original << "\n\n";
+   std::cerr << "Estimated transformation:\n" << RT << "\n\n";
+   double maxVal=-1;
+   cv::minMaxIdx(cv::abs(RT - original),0,&maxVal);
+   std::cerr << "Max error: " << maxVal << "\n\n";
+   std::cerr << "Rotation angle: " << rad2deg(std::acos(RT.at<double>(0, 0))) << "deg\n";
 
    for (auto c : assignments) {
       std::cout << "\"(" << c.first.first << "," << c.first.second << ")\" -- \"(" << c.second.first << "," << c.second.second << ")\";\n";
