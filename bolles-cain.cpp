@@ -9,6 +9,8 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/video/tracking.hpp>
+#include <opencv2/opencv.hpp>
+
 
 // https://isocpp.org/wiki/faq/mixing-c-and-cpp#include-c-hdrs-nonsystem
 extern "C" {
@@ -81,9 +83,17 @@ int main(int, char*[]) {
    P1.push_back(cv::Point2d(1, 0));
    P1.push_back(cv::Point2d(cos(deg2rad(175)), sin(deg2rad(175))));
    P1.push_back(cv::Point2d(cos(deg2rad(185)), sin(deg2rad(185))));
-   P1.push_back(cv::Point2d(cos(deg2rad(15)), sin(deg2rad(15))));
-   P1.push_back(cv::Point2d(cos(deg2rad(35)), sin(deg2rad(35))));
-   P1.push_back(cv::Point2d(cos(deg2rad(45)), sin(deg2rad(45))));
+    P1.push_back(cv::Point2d(cos(deg2rad(15)), sin(deg2rad(15))));
+    P1.push_back(cv::Point2d(cos(deg2rad(35)), sin(deg2rad(35))));
+    P1.push_back(cv::Point2d(cos(deg2rad(45)), sin(deg2rad(45))));
+
+   cv::Mat image = cv::Mat::zeros(400, 400, CV_8UC3);
+   cv::Point2d center(200,200);
+   for(size_t i = 1; i < P1.size(); i++){
+      //cv::line(image, center+100*P1[i], center+100*P1[i-1], cv::Scalar(110, 220, 0));//,  2, 8 );
+   }
+   
+ 
 
    auto theta = deg2rad(45);
 
@@ -153,8 +163,11 @@ int main(int, char*[]) {
          std::cout << "\"(" << vv.first << "," << vv.second << ")\" [color=red];\n";
          src.push_back(P1[vv.first]);
          dst.push_back(P2[vv.second]);
+         cv::circle(image,center+100*P1[vv.first],3,cv::Scalar(110,220,0));
+         //cv::circle(image,center+100*P2[vv.second],6,cv::Scalar(0,0,220));
       }
    }
+   
 
    cv::Mat RT = cv::estimateRigidTransform(src, dst, false);
    cv::Mat original = (cv::Mat_<double>(2, 3) << cos(theta), -sin(theta), 0, sin(theta), cos(theta), 0);
@@ -164,7 +177,21 @@ int main(int, char*[]) {
    double maxVal=-1;
    cv::minMaxIdx(cv::abs(RT - original),0,&maxVal);
    std::cerr << "Max error: " << maxVal << "\n\n";
-   std::cerr << "Rotation angle: " << rad2deg(std::acos(RT.at<double>(0, 0))) << "deg\n";
+   auto estimated_theta = std::acos(RT.at<double>(0, 0));
+   std::cerr << "Rotation angle: " << rad2deg(estimated_theta) << "deg\n";
+
+
+   for (size_t v = 0; v < n_vertices; v++) {
+      if (SET_CONTAINS(s, v)) {
+         auto vv = two_way.look_up_12(v);
+         auto p = P2[vv.second];
+         auto transformed = cv::Point2d(cos(-estimated_theta)*p.x - sin(-estimated_theta)*p.y, sin(-estimated_theta)*p.x + cos(-estimated_theta)*p.y);
+         cv::circle(image,center+100*transformed,6,cv::Scalar(0,0,255));
+      }
+   }
+   cv::imwrite("result.png",image);
+
+
 
    for (auto c : assignments) {
       std::cout << "\"(" << c.first.first << "," << c.first.second << ")\" -- \"(" << c.second.first << "," << c.second.second << ")\";\n";
