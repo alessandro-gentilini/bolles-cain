@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+PROJECT( bolles-cain )
+FIND_PACKAGE( OpenCV REQUIRED )
+ADD_EXECUTABLE( bolles-cain bolles-cain.cpp cliquer-1.21/cliquer.c cliquer-1.21/graph.c cliquer-1.21/reorder.c )
+TARGET_LINK_LIBRARIES( bolles-cain ${OpenCV_LIBS})
+SET(CMAKE_CXX_FLAGS "-std=c++0x")
