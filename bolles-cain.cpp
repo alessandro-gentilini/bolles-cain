@@ -3,10 +3,12 @@
 #include <set>
 #include <iostream>
 #include <map>
+#include <random>
 
 
 
 #include <opencv2/core.hpp>
+#include <opencv2/video/tracking.hpp>
 
 // https://isocpp.org/wiki/faq/mixing-c-and-cpp#include-c-hdrs-nonsystem
 extern "C" {
@@ -77,12 +79,16 @@ int main(int, char*[]) {
    P1.push_back(cv::Point2d(cos(deg2rad(185)), sin(deg2rad(185))));
 
    auto theta = deg2rad(45);
-   cv::Mat R = (cv::Mat_<double>(2, 2) << cos(theta), -sin(theta), sin(theta), cos(theta));
+
 
    std::vector<cv::Point2d> P2;
    for (size_t i = 0; i < P1.size(); i++) {
       P2.push_back(cv::Point2d(cos(theta)*P1[i].x - sin(theta)*P1[i].y, sin(theta)*P1[i].x + cos(theta)*P1[i].y));
    }
+
+   std::random_device rd;
+   std::mt19937 rng(rd());
+   std::shuffle(P2.begin(), P2.end(), rng);
 
    std::vector<std::pair<size_t, size_t>> couples;
    for (size_t i = 0; i < P1.size(); i++) {
@@ -131,17 +137,30 @@ int main(int, char*[]) {
 
    std::cout << "\ngraph G{\n";
 
+   std::vector<cv::Point2d> src, dst;
+
    for (size_t v = 0; v < n_vertices; v++) {
       if (SET_CONTAINS(s, v)) {
          auto vv = two_way.look_up_12(v);
          std::cout << "\"(" << vv.first << "," << vv.second << ")\" [color=red];\n";
+         src.push_back(P1[vv.first]);
+         dst.push_back(P2[vv.second]);
       }
    }
+
+   cv::Mat RT = cv::estimateRigidTransform(src, dst, false);
+   cv::Mat original = (cv::Mat_<double>(2, 3) << cos(theta), -sin(theta), 0, sin(theta), cos(theta), 0);
+
+   //std::cerr << RT << "\n";
+   //std::cerr << original << "\n";
+   double minVal=-1;
+   cv::minMaxIdx(cv::abs(RT - original),&minVal,0);
+   std::cerr << minVal << "\n";
 
    for (auto c : assignments) {
       std::cout << "\"(" << c.first.first << "," << c.first.second << ")\" -- \"(" << c.second.first << "," << c.second.second << ")\";\n";
    }
-   std::cout << "}\n";   
+   std::cout << "}\n";
 
    return 0;
 }
