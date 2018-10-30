@@ -89,8 +89,10 @@ int main(int, char*[]) {
 
    cv::Mat image = cv::Mat::zeros(400, 400, CV_8UC3);
    cv::Point2d center(200,200);
+   cv::circle(image,center+100*P1[0],3,cv::Scalar(0,0,255));
    for(size_t i = 1; i < P1.size(); i++){
-      //cv::line(image, center+100*P1[i], center+100*P1[i-1], cv::Scalar(110, 220, 0));//,  2, 8 );
+      cv::line(image, center+100*P1[i], center+100*P1[i-1], cv::Scalar(0, 0, 255));//,  2, 8 );
+      cv::circle(image,center+100*P1[i],3,cv::Scalar(0,0,255));
    }
    
  
@@ -106,7 +108,7 @@ int main(int, char*[]) {
 
    std::random_device rd;
    std::mt19937 rng(rd());
-   std::shuffle(P2.begin(), P2.end(), rng);
+   //std::shuffle(P2.begin(), P2.end(), rng);
 
    std::vector<std::pair<size_t, size_t>> couples;
    for (size_t i = 0; i < P1.size(); i++) {
@@ -163,7 +165,7 @@ int main(int, char*[]) {
          std::cout << "\"(" << vv.first << "," << vv.second << ")\" [color=red];\n";
          src.push_back(P1[vv.first]);
          dst.push_back(P2[vv.second]);
-         cv::circle(image,center+100*P1[vv.first],3,cv::Scalar(110,220,0));
+         cv::circle(image,center+100*P1[vv.first],5,cv::Scalar(0,255,0));
          //cv::circle(image,center+100*P2[vv.second],6,cv::Scalar(0,0,220));
       }
    }
@@ -186,7 +188,7 @@ int main(int, char*[]) {
          auto vv = two_way.look_up_12(v);
          auto p = P2[vv.second];
          auto transformed = cv::Point2d(cos(-estimated_theta)*p.x - sin(-estimated_theta)*p.y, sin(-estimated_theta)*p.x + cos(-estimated_theta)*p.y);
-         cv::circle(image,center+100*transformed,6,cv::Scalar(0,0,255));
+         cv::circle(image,center+100*transformed,7,cv::Scalar(255,0,0));
       }
    }
    cv::imwrite("result.png",image);
