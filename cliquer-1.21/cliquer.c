@@ -5,7 +5,6 @@
  * Copyright (C) 2002 Sampo Niskanen, Patric Östergård.
  * Licensed under the GNU GPL, read the file LICENSE for details.
  */
-#define _WIN32
 
 #include <stdio.h>
 #include <stdlib.h>
