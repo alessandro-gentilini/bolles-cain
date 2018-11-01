@@ -5,7 +5,7 @@
  * Copyright (C) 2002 Sampo Niskanen, Patric Östergård.
  * Licensed under the GNU GPL, read the file LICENSE for details.
  */
-
+#define _WIN32
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -228,6 +228,18 @@ static int unweighted_clique_search_single(int *table, int min_size,
 				return 0;
 			}
 		}
+#else	
+		if (opts && opts->time_function) {
+			if (!opts->time_function(entrance_level,
+						 i+1,g->n,clique_size[v] *
+						 weight_multiplier,
+						 0,
+						 0,
+						 opts)) {
+				temp_list[temp_count++]=newtable;
+				return 0;
+			}
+		}	
 #endif // !_WIN32		
 
 		if (min_size) {
@@ -429,6 +441,18 @@ static int unweighted_clique_search_all(int *table, int start,
 				break;
 			}
 		}
+#else
+		if (opts->time_function) {
+			if (!opts->time_function(entrance_level,
+						 i+1,g->n,min_size *
+						 weight_multiplier,
+						 0,
+						 0,
+						 opts)) {
+				/* Abort. */
+				break;
+			}
+		}		
 #endif // !_WIN32		
 	}
 	temp_list[temp_count++]=newtable;
@@ -686,6 +710,19 @@ static int weighted_clique_search_single(int *table, int min_weight,
 				break;
 			}
 		}
+#else	
+		if (opts->time_function) {
+			if (!opts->time_function(entrance_level,
+						 i+1,g->n,clique_size[v] *
+						 weight_multiplier,
+						 0,
+						 0,
+						 opts)) {
+				set_free(current_clique);
+				current_clique=NULL;
+				break;
+			}
+		}	
 #endif // !_WIN32		
 	}
 	temp_list[temp_count++]=newtable;
@@ -790,6 +827,19 @@ static int weighted_clique_search_all(int *table, int start,
 				break;
 			}
 		}
+#else	
+		if (opts->time_function) {
+			if (!opts->time_function(entrance_level,
+						 i+1,g->n,clique_size[v] *
+						 weight_multiplier,
+						 0,
+						 0,
+						 opts)) {
+				set_free(current_clique);
+				current_clique=NULL;
+				break;
+			}
+		}	
 #endif // !_WIN32		
 	}
 	temp_list[temp_count++]=newtable;
