@@ -6,12 +6,16 @@
  * Licensed under the GNU GPL, read the file LICENSE for details.
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+
+#ifndef _WIN32
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/times.h>
+#endif // !_WIN32
 
 #include "cliquer.h"
 
@@ -33,8 +37,12 @@ clique_options *clique_default_options=&clique_default_options_struct;
 static int *clique_size;      /* c[i] == max. clique size in {0,1,...,i-1} */
 static set_t current_clique;  /* Current clique being searched. */
 static set_t best_clique;     /* Largest/heaviest clique found so far. */
+
+#ifndef _WIN32
 static struct tms cputimer;      /* Timer for opts->time_function() */
 static struct timeval realtimer; /* Timer for opts->time_function() */
+#endif // !_WIN32
+
 static int clique_list_count=0;  /* No. of cliques in opts->clique_list[] */
 static int weight_multiplier=1;  /* Weights multiplied by this when passing
 				  * to time_function(). */
@@ -52,6 +60,7 @@ static int temp_count=0;
  */
 static int entrance_level=0;  /* How many levels for entrance have occurred? */
 
+#ifndef _WIN32
 #define ENTRANCE_SAVE() \
 int *old_clique_size = clique_size;                     \
 set_t old_current_clique = current_clique;              \
@@ -64,7 +73,18 @@ struct tms old_cputimer;                                \
 struct timeval old_realtimer;                           \
 memcpy(&old_cputimer,&cputimer,sizeof(struct tms));       \
 memcpy(&old_realtimer,&realtimer,sizeof(struct timeval));
+#else
+#define ENTRANCE_SAVE() \
+int *old_clique_size = clique_size;                     \
+set_t old_current_clique = current_clique;              \
+set_t old_best_clique = best_clique;                    \
+int old_clique_list_count = clique_list_count;          \
+int old_weight_multiplier = weight_multiplier;          \
+int **old_temp_list = temp_list;                        \
+int old_temp_count = temp_count;                        
+#endif // !_WIN32
 
+#ifndef _WIN32
 #define ENTRANCE_RESTORE() \
 clique_size = old_clique_size;                          \
 current_clique = old_current_clique;                    \
@@ -75,6 +95,16 @@ temp_list = old_temp_list;                              \
 temp_count = old_temp_count;                            \
 memcpy(&cputimer,&old_cputimer,sizeof(struct tms));       \
 memcpy(&realtimer,&old_realtimer,sizeof(struct timeval));
+#else
+#define ENTRANCE_RESTORE() \
+clique_size = old_clique_size;                          \
+current_clique = old_current_clique;                    \
+best_clique = old_best_clique;                          \
+clique_list_count = old_clique_list_count;              \
+weight_multiplier = old_weight_multiplier;              \
+temp_list = old_temp_list;                              \
+temp_count = old_temp_count;                            
+#endif // !_WIN32
 
 
 /* Number of clock ticks per second (as returned by sysconf(_SC_CLK_TCK)) */
@@ -138,8 +168,10 @@ static boolean false_function(set_t clique,graph_t *g,clique_options *opts);
  */
 static int unweighted_clique_search_single(int *table, int min_size,
 					   graph_t *g, clique_options *opts) {
+#ifndef _WIN32	
 	struct tms tms;
 	struct timeval timeval;
+#endif //!_WIN32	
 	int i,j;
 	int v,w;
 	int *newtable;
@@ -177,6 +209,7 @@ static int unweighted_clique_search_single(int *table, int min_size,
 			clique_size[v]=clique_size[w];
 		}
 
+#ifndef _WIN32
 		if (opts && opts->time_function) {
 			gettimeofday(&timeval,NULL);
 			times(&tms);
@@ -195,6 +228,7 @@ static int unweighted_clique_search_single(int *table, int min_size,
 				return 0;
 			}
 		}
+#endif // !_WIN32		
 
 		if (min_size) {
 			if (clique_size[v]>=min_size) {
@@ -334,8 +368,10 @@ static int unweighted_clique_search_all(int *table, int start,
 					int min_size, int max_size,
 					boolean maximal, graph_t *g,
 					clique_options *opts) {
+#ifndef _WIN32	
 	struct timeval timeval;
 	struct tms tms;
+#endif // !_WIN32	
 	int i,j;
 	int v;
 	int *newtable;
@@ -374,6 +410,7 @@ static int unweighted_clique_search_all(int *table, int start,
 		}
 		count+=j;
 
+#ifndef _WIN32
 		if (opts->time_function) {
 			gettimeofday(&timeval,NULL);
 			times(&tms);
@@ -392,6 +429,7 @@ static int unweighted_clique_search_all(int *table, int start,
 				break;
 			}
 		}
+#endif // !_WIN32		
 	}
 	temp_list[temp_count++]=newtable;
 	return count;
@@ -538,8 +576,10 @@ static int sub_unweighted_all(int *table, int size, int min_size, int max_size,
 static int weighted_clique_search_single(int *table, int min_weight,
 					 int max_weight, graph_t *g,
 					 clique_options *opts) {
+#ifndef _WIN32	
 	struct timeval timeval;
 	struct tms tms;
+#endif // !_WIN32	
 	int i,j;
 	int v;
 	int *newtable;
@@ -626,7 +666,7 @@ static int weighted_clique_search_single(int *table, int min_weight,
 		}
 
 		clique_size[v]=search_weight;
-
+#ifndef _WIN32
 		if (opts->time_function) {
 			gettimeofday(&timeval,NULL);
 			times(&tms);
@@ -646,6 +686,7 @@ static int weighted_clique_search_single(int *table, int min_weight,
 				break;
 			}
 		}
+#endif // !_WIN32		
 	}
 	temp_list[temp_count++]=newtable;
 	if (min_weight && (search_weight > 0)) {
@@ -686,8 +727,10 @@ static int weighted_clique_search_all(int *table, int start,
 				      int min_weight, int max_weight,
 				      boolean maximal, graph_t *g,
 				      clique_options *opts) {
+#ifndef _WIN32	
 	struct timeval timeval;
 	struct tms tms;
+#endif // !_WIN32	
 	int i,j;
 	int v;
 	int *newtable;
@@ -727,7 +770,7 @@ static int weighted_clique_search_all(int *table, int start,
 			/* Abort. */
 			break;
 		}
-
+#ifndef _WIN32
 		if (opts->time_function) {
 			gettimeofday(&timeval,NULL);
 			times(&tms);
@@ -747,6 +790,7 @@ static int weighted_clique_search_all(int *table, int start,
 				break;
 			}
 		}
+#endif // !_WIN32		
 	}
 	temp_list[temp_count++]=newtable;
 
@@ -1106,9 +1150,13 @@ set_t clique_unweighted_find_single(graph_t *g,int min_size,int max_size,
 		return NULL;
 	}
 
+
+#ifndef _WIN32
 	if (clocks_per_sec==0)
 		clocks_per_sec=sysconf(_SC_CLK_TCK);
 	ASSERT(clocks_per_sec>0);
+#endif // !_WIN32	
+
 
 	/* Dynamic allocation */
 	current_clique=set_new(g->n);
@@ -1117,9 +1165,13 @@ set_t clique_unweighted_find_single(graph_t *g,int min_size,int max_size,
 	temp_list=malloc((g->n+2)*sizeof(int *));
 	temp_count=0;
 
+
+#ifndef _WIN32
 	/* "start clock" */
 	gettimeofday(&realtimer,NULL);
 	times(&cputimer);
+#endif // !_WIN32	
+
 
 	/* reorder */
 	if (opts->reorder_function) {
@@ -1230,9 +1282,11 @@ int clique_unweighted_find_all(graph_t *g, int min_size, int max_size,
 		return 0;
 	}
 
+#ifndef _WIN32
 	if (clocks_per_sec==0)
 		clocks_per_sec=sysconf(_SC_CLK_TCK);
 	ASSERT(clocks_per_sec>0);
+#endif // !_WIN32	
 
 	/* Dynamic allocation */
 	current_clique=set_new(g->n);
@@ -1244,9 +1298,11 @@ int clique_unweighted_find_all(graph_t *g, int min_size, int max_size,
 	clique_list_count=0;
 	memset(clique_size,0,g->n * sizeof(int));
 
+#ifndef _WIN32
 	/* "start clock" */
 	gettimeofday(&realtimer,NULL);
 	times(&cputimer);
+#endif // !_WIN32	
 
 	/* reorder */
 	if (opts->reorder_function) {
@@ -1380,9 +1436,11 @@ set_t clique_find_single(graph_t *g,int min_weight,int max_weight,
 		return NULL;
 	}
 
+#ifndef _WIN32
 	if (clocks_per_sec==0)
 		clocks_per_sec=sysconf(_SC_CLK_TCK);
 	ASSERT(clocks_per_sec>0);
+#endif // !_WIN32	
 
 	/* Check whether we can use unweighted routines. */
 	if (!graph_weighted(g)) {
@@ -1415,9 +1473,11 @@ set_t clique_find_single(graph_t *g,int min_weight,int max_weight,
 
 	clique_list_count=0;
 
+#ifndef _WIN32
 	/* "start clock" */
 	gettimeofday(&realtimer,NULL);
 	times(&cputimer);
+#endif // !_WIN32	
 
 	/* reorder */
 	if (opts->reorder_function) {
@@ -1539,9 +1599,11 @@ int clique_find_all(graph_t *g, int min_weight, int max_weight,
 		return 0;
 	}
 
+#ifndef _WIN32
 	if (clocks_per_sec==0)
 		clocks_per_sec=sysconf(_SC_CLK_TCK);
 	ASSERT(clocks_per_sec>0);
+#endif // !_WIN32	
 
 	if (!graph_weighted(g)) {
 		min_weight=DIV_UP(min_weight,g->weights[0]);
@@ -1571,9 +1633,11 @@ int clique_find_all(graph_t *g, int min_weight, int max_weight,
 	temp_list=malloc((g->n+2)*sizeof(int *));
 	temp_count=0;
 
+#ifndef _WIN32
 	/* "start clock" */
 	gettimeofday(&realtimer,NULL);
 	times(&cputimer);
+#endif // !_WIN32	
 
 	/* reorder */
 	if (opts->reorder_function) {

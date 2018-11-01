@@ -5,11 +5,14 @@
  * Copyright (C) 2002 Sampo Niskanen, Patric Östergård.
  * Licensed under the GNU GPL, read the file LICENSE for details.
  */
-
 #include "reorder.h"
 
 #include <time.h>
+
+#ifndef _WIN32
 #include <sys/times.h>
+#endif // !_WIN32
+
 #include <stdlib.h>
 
 #include <limits.h>
@@ -406,12 +409,18 @@ int *reorder_by_degree(graph_t *g, boolean weighted) {
  *       is called using the system time.
  */
 int *reorder_by_random(graph_t *g, boolean weighted) {
+#ifndef _WIN32	
 	struct tms t;
+#endif // !_WIN32	
 	int i,r;
 	int *new;
 	boolean *used;
 
+#ifndef _WIN32	
 	srand(times(&t)+time(NULL));
+#else
+	srand(time(NULL));
+#endif // !_WIN32	
 
 	new=calloc(g->n, sizeof(int));
 	used=calloc(g->n, sizeof(boolean));
