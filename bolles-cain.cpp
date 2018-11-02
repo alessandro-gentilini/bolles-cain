@@ -44,7 +44,9 @@ double angle(const std::vector<cv::Point2d>& P1,
    auto a1 = std::atan2(p1.y, p1.x);
    auto a2 = std::atan2(p2.y, p2.x);
    // https://stackoverflow.com/a/2007279
-   return std::atan2(sin(a1 - a2), cos(a1 - a2));
+   auto result = std::abs(std::atan2(sin(a1 - a2), cos(a1 - a2)));
+   std::cerr << p1 << " " << p2 << " " << rad2deg(a1) << " " << rad2deg(a2) << " " << rad2deg(result) << "\n";
+   return result;
 }
 
 template <class T1, class T2>
@@ -83,9 +85,9 @@ int main(int, char*[]) {
    P1.push_back(cv::Point2d(1, 0));
    P1.push_back(cv::Point2d(cos(deg2rad(175)), sin(deg2rad(175))));
    P1.push_back(cv::Point2d(cos(deg2rad(185)), sin(deg2rad(185))));
-    P1.push_back(cv::Point2d(cos(deg2rad(15)), sin(deg2rad(15))));
-    P1.push_back(cv::Point2d(cos(deg2rad(35)), sin(deg2rad(35))));
-    P1.push_back(cv::Point2d(cos(deg2rad(45)), sin(deg2rad(45))));
+    // P1.push_back(cv::Point2d(cos(deg2rad(15)), sin(deg2rad(15))));
+    // P1.push_back(cv::Point2d(cos(deg2rad(35)), sin(deg2rad(35))));
+    // P1.push_back(cv::Point2d(cos(deg2rad(45)), sin(deg2rad(45))));
 
    cv::Mat image = cv::Mat::zeros(400, 400, CV_8UC3);
    cv::Point2d center(200,200);
@@ -126,8 +128,9 @@ int main(int, char*[]) {
    for (size_t i = 0; i < couples.size(); i++) {
       for (size_t j = 0; j < couples.size(); j++) {
          if (i == j) continue;
-         if (distance(P1, P2, couples[i], couples[j]) < distance_threshold &&
-               angle(P1, P2, couples[i], couples[j]) < angle_threshold) {
+         if (distance(P1, P2, couples[i], couples[j]) < distance_threshold 
+            && angle(P1, P2, couples[i], couples[j]) < angle_threshold
+            ) {
             // https://stackoverflow.com/a/38942461
             assignments.insert(std::minmax(couples[i], couples[j]));
             if (!two_way.present_21(couples[i])) {
@@ -138,6 +141,11 @@ int main(int, char*[]) {
             }
          }
       }
+   }
+
+   if(n_vertices<=0) {
+      std::cerr << "Empty graph\n";
+      return 1;
    }
 
    graph_t *g = graph_new(n_vertices);
@@ -159,6 +167,7 @@ int main(int, char*[]) {
 
    std::vector<cv::Point2d> src, dst;
 
+   // give a color to the nodes in the clique
    for (size_t v = 0; v < n_vertices; v++) {
       if (SET_CONTAINS(s, v)) {
          auto vv = two_way.look_up_12(v);
@@ -176,25 +185,28 @@ int main(int, char*[]) {
 
    std::cerr << "Applied transformation:\n" << original << "\n\n";
    std::cerr << "Estimated transformation:\n" << RT << "\n\n";
-   double maxVal=-1;
-   cv::minMaxIdx(cv::abs(RT - original),0,&maxVal);
-   std::cerr << "Max error: " << maxVal << "\n\n";
-   auto estimated_theta = std::acos(RT.at<double>(0, 0));
-   std::cerr << "Rotation angle: " << rad2deg(estimated_theta) << "deg\n";
+
+   if(!RT.empty()) {
+      double maxVal=-1;
+      cv::minMaxIdx(cv::abs(RT - original),0,&maxVal);
+      std::cerr << "Max error: " << maxVal << "\n\n";
+      auto estimated_theta = std::acos(RT.at<double>(0, 0));
+      std::cerr << "Rotation angle: " << rad2deg(estimated_theta) << "deg\n";
 
 
-   for (size_t v = 0; v < n_vertices; v++) {
-      if (SET_CONTAINS(s, v)) {
-         auto vv = two_way.look_up_12(v);
-         auto p = P2[vv.second];
-         auto transformed = cv::Point2d(cos(-estimated_theta)*p.x - sin(-estimated_theta)*p.y, sin(-estimated_theta)*p.x + cos(-estimated_theta)*p.y);
-         cv::circle(image,center+100*transformed,7,cv::Scalar(255,0,0));
+      for (size_t v = 0; v < n_vertices; v++) {
+         if (SET_CONTAINS(s, v)) {
+            auto vv = two_way.look_up_12(v);
+            auto p = P2[vv.second];
+            auto transformed = cv::Point2d(cos(-estimated_theta)*p.x - sin(-estimated_theta)*p.y, sin(-estimated_theta)*p.x + cos(-estimated_theta)*p.y);
+            cv::circle(image,center+100*transformed,7,cv::Scalar(255,0,0));
+         }
       }
+      cv::imwrite("result.png",image);
    }
-   cv::imwrite("result.png",image);
 
 
-
+   // print the clique edges
    for (auto c : assignments) {
       std::cout << "\"(" << c.first.first << "," << c.first.second << ")\" -- \"(" << c.second.first << "," << c.second.second << ")\";\n";
    }
