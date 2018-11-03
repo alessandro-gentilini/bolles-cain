@@ -49,6 +49,8 @@ double angle(const std::vector<cv::Point2d>& P1,
    return result;
 }
 
+
+
 std::vector<double> quad_code(
    const cv::Point2d& A,
    const cv::Point2d& B,
@@ -59,16 +61,19 @@ std::vector<double> quad_code(
    auto x_B = B.x;
    auto y_A = A.y;
    auto y_B = B.y;   
-   auto c=(1.0/2.0)*M_SQRT2*(-x_A + x_B - y_A + y_B)*sqrt(1.0/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2)));
-   auto s=(1.0/2.0)*M_SQRT2*(-x_A + x_B + y_A - y_B)*sqrt(1.0/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2)));
-   auto t_x=(pow(x_A, 2) - x_A*x_B - x_A*y_B + x_B*y_A + pow(y_A, 2) - y_A*y_B)/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2));
-   auto t_y=(pow(x_A, 2) - x_A*x_B + x_A*y_B - x_B*y_A + pow(y_A, 2) - y_A*y_B)/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2));
-   auto lambda=M_SQRT2*sqrt(1.0/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2)));
-   result.push_back(c);
-   result.push_back(s);
-   result.push_back(t_x);
-   result.push_back(t_y);
-   result.push_back(lambda);
+   auto c = (1.0/2.0)*M_SQRT2*(-x_A + x_B - y_A + y_B)*sqrt(1.0/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2)));
+   auto s = (1.0/2.0)*M_SQRT2*(-x_A + x_B + y_A - y_B)*sqrt(1.0/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2)));
+   auto t_X = (pow(x_A, 2) - x_A*x_B - x_A*y_B + x_B*y_A + pow(y_A, 2) - y_A*y_B)/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2));
+   auto t_Y = (pow(x_A, 2) - x_A*x_B + x_A*y_B - x_B*y_A + pow(y_A, 2) - y_A*y_B)/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2));
+   auto lambda = M_SQRT2*sqrt(1.0/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2)));
+   auto x_C = lambda*c*C.x - lambda*s*C.y + t_X;
+   auto x_D = lambda*c*D.x - lambda*s*D.y + t_X;
+   auto y_C = lambda*s*C.x + lambda*c*C.y + t_Y;
+   auto y_D = lambda*s*D.x + lambda*c*D.y + t_Y;
+   result.push_back(x_C);
+   result.push_back(y_C);
+   result.push_back(x_D);
+   result.push_back(y_D);
    return result;
 }
 
@@ -166,7 +171,7 @@ int main(int, char*[]) {
       }
    }
 
-   std::vector<double> quad = quad_code(cv::Point2d(0,0),cv::Point2d(1,1),cv::Point2d(0,0),cv::Point2d(1,1));
+   std::vector<double> quad = quad_code(cv::Point2d(0,0),cv::Point2d(1,1),cv::Point2d(0.5,0.5),cv::Point2d(.75,.75));
    for(size_t i = 0; i < quad.size(); i++){
       std::cout << quad[i] << " ";
    }
