@@ -52,6 +52,10 @@ double angle(const std::vector<cv::Point2d>& P1,
 
 
 std::vector<double> quad_code(
+   // See Figure 1 in:
+   // LANG, Dustin, et al. 
+   // Astrometry.net: Blind astrometric calibration of arbitrary astronomical images. 
+   // The astronomical journal, 2010, 139.5: 1782.
    const cv::Point2d& A,
    const cv::Point2d& B,
    const cv::Point2d& C,
