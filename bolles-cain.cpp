@@ -45,7 +45,30 @@ double angle(const std::vector<cv::Point2d>& P1,
    auto a2 = std::atan2(p2.y, p2.x);
    // https://stackoverflow.com/a/2007279
    auto result = std::abs(std::atan2(sin(a1 - a2), cos(a1 - a2)));
-   std::cerr << p1 << " " << p2 << " " << rad2deg(a1) << " " << rad2deg(a2) << " " << rad2deg(result) << "\n";
+   //std::cerr << p1 << " " << p2 << " " << rad2deg(a1) << " " << rad2deg(a2) << " " << rad2deg(result) << "\n";
+   return result;
+}
+
+std::vector<double> quad_code(
+   const cv::Point2d& A,
+   const cv::Point2d& B,
+   const cv::Point2d& C,
+   const cv::Point2d& D) {
+   std::vector<double> result;
+   auto x_A = A.x;
+   auto x_B = B.x;
+   auto y_A = A.y;
+   auto y_B = B.y;   
+   auto c=(1.0/2.0)*M_SQRT2*(-x_A + x_B - y_A + y_B)*sqrt(1.0/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2)));
+   auto s=(1.0/2.0)*M_SQRT2*(-x_A + x_B + y_A - y_B)*sqrt(1.0/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2)));
+   auto t_x=(pow(x_A, 2) - x_A*x_B - x_A*y_B + x_B*y_A + pow(y_A, 2) - y_A*y_B)/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2));
+   auto t_y=(pow(x_A, 2) - x_A*x_B + x_A*y_B - x_B*y_A + pow(y_A, 2) - y_A*y_B)/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2));
+   auto lambda=M_SQRT2*sqrt(1.0/(pow(x_A, 2) - 2*x_A*x_B + pow(x_B, 2) + pow(y_A, 2) - 2*y_A*y_B + pow(y_B, 2)));
+   result.push_back(c);
+   result.push_back(s);
+   result.push_back(t_x);
+   result.push_back(t_y);
+   result.push_back(lambda);
    return result;
 }
 
@@ -142,6 +165,12 @@ int main(int, char*[]) {
          }
       }
    }
+
+   std::vector<double> quad = quad_code(cv::Point2d(0,0),cv::Point2d(1,1),cv::Point2d(0,0),cv::Point2d(1,1));
+   for(size_t i = 0; i < quad.size(); i++){
+      std::cout << quad[i] << " ";
+   }
+   std::cout << "\n";
 
    if(n_vertices<=0) {
       std::cerr << "Empty graph\n";
